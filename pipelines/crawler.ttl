@@ -1,0 +1,148 @@
+@base <https://ns.bergnet.org/news/pipeline/crawler/>.
+@prefix p: <https://pipeline.described.at/>.
+@prefix code: <https://code.described.at/>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+
+<defaultVars>
+  p:variable [ a p:Variable;
+    p:name "ENDPOINT_GRAPH_STORE_URL";
+    p:value "http://localhost:3030/news/data"
+  ], [ a p:Variable;
+    p:name "ENDPOINT_QUERY_URL";
+    p:value "http://localhost:3030/news/query"
+  ], [ a p:Variable;
+    p:name "ENDPOINT_USER";
+    p:value ""
+  ], [ a p:Variable;
+    p:name "ENDPOINT_PASSWORD";
+    p:value ""
+  ], [ a p:Variable;
+    p:name "GRAPH";
+    p:value "http://localhost/graph/article"
+  ], [ a p:Variable;
+    p:name "ITEM_BASE_URL";
+    p:value "http://localhost/channel/"
+  ], [ a p:Variable;
+    p:name "CRAWLER_CONFIG";
+    p:value "crawler.json"
+  ], [ a p:Variable;
+    p:name "ARTICLE_BASE_URL";
+    p:value "http://localhost/article/"
+  ].
+
+<stdout> a p:Pipeline, p:Readable;
+  p:variables <defaultVars>;
+  p:steps [
+    p:stepList (
+      <processItems>
+      <setGraph>
+      <serialize>
+    )
+  ].
+
+<store> a p:Pipeline;
+  p:variables <defaultVars>;
+  p:steps [
+    p:stepList (
+      <processItems>
+      <setGraph>
+      <upload>
+    )
+  ].
+
+<processItems> a p:Pipeline, p:ReadableObjectMode;
+  p:steps [
+    p:stepList (
+      <readItems>
+      <mapArgs>
+      <crawler>
+    )
+  ].
+
+<toString> a p:Step;
+  code:implementedBy [ a code:EcmaScriptModule;
+    code:link <node:barnard59-base/json.js#stringify>
+  ].
+
+<readItems> a p:Step;
+  code:implementedBy [ a code:EcmaScriptModule;
+    code:link <node:barnard59-sparql/select.js#default>
+  ];
+  code:arguments [
+    code:name "endpoint";
+    code:value "ENDPOINT_QUERY_URL"^^p:VariableName
+  ], [
+    code:name "user";
+    code:value "ENDPOINT_USER"^^p:VariableName
+  ], [
+    code:name "password";
+    code:value "ENDPOINT_PASSWORD"^^p:VariableName
+  ], [
+    code:name "query";
+    code:value """
+      PREFIX rss: <http://purl.org/rss/1.0/>
+
+      SELECT * WHERE {
+        GRAPH ?g0 {
+          ?channel rss:items ?item.
+          ?item rss:link ?link.
+        }
+
+        FILTER NOT EXISTS {
+          GRAPH ?g1 {
+            ?link ?linkP ?linkO.
+          }
+        }
+      }
+    """
+  ].
+
+<mapArgs> a p:Step;
+  code:implementedBy [ a code:EcmaScriptModule;
+    code:link <node:barnard59-base/map.js#default>
+  ];
+  code:arguments ("""result => {
+    const articleBaseURL = this.variables.get('ARTICLE_BASE_URL')
+    const itemBaseURL = this.variables.get('ITEM_BASE_URL')
+    const itemPath = result.item.value.slice(itemBaseURL.length)
+
+    return {
+      article: (new URL(itemPath, articleBaseURL)).toString(),
+      link: result.link.value
+    }
+  }"""^^code:EcmaScript).
+
+<crawler> a p:Step;
+  code:implementedBy [ a code:EcmaScriptModule;
+    code:link <file:../lib/newsCrawler.js#default>
+  ];
+  code:arguments [
+    code:name "config";
+    code:value "CRAWLER_CONFIG"^^p:VariableName
+  ].
+
+<serialize> a p:Step;
+  code:implementedBy [ a code:EcmaScriptModule;
+    code:link <node:barnard59-formats/ntriples.js#serialize>
+  ].
+
+<setGraph> a p:Step;
+  code:implementedBy [ a code:EcmaScriptModule;
+    code:link <node:barnard59-rdf/setGraph.js#default>
+  ];
+  code:arguments ("GRAPH"^^p:VariableName).
+
+<upload> a p:Step;
+  code:implementedBy [ a code:EcmaScriptModule;
+    code:link <node:barnard59-graph-store/post.js#default>
+  ];
+  code:arguments [
+    code:name "endpoint";
+    code:value "ENDPOINT_GRAPH_STORE_URL"^^p:VariableName
+  ], [
+    code:name "user";
+    code:value "ENDPOINT_USER"^^p:VariableName
+  ], [
+    code:name "password";
+    code:value "ENDPOINT_PASSWORD"^^p:VariableName
+  ].

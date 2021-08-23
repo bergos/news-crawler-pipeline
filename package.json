@@ -1,0 +1,44 @@
+{
+  "name": "news-crawler-pipeline",
+  "version": "0.0.0",
+  "description": "News Crawler Pipeline",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "crawler-stdout": "barnard59 run -v -v --pipeline=https://ns.bergnet.org/news/pipeline/crawler/stdout pipelines/crawler.ttl",
+    "crawler": "barnard59 run -v -v --pipeline=https://ns.bergnet.org/news/pipeline/crawler/store pipelines/crawler.ttl",
+    "feed": "./bin/feeds.js -v -v --pipeline=https://ns.bergnet.org/news/pipeline/feed/store feeds/*.json",
+    "feed-stdout": "./bin/feeds.js -v -v --pipeline=https://ns.bergnet.org/news/pipeline/feed/stdout feeds/*.json",
+    "test": "stricter-standard"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/bergos/news-crawler-pipeline.git"
+  },
+  "keywords": [],
+  "author": "Thomas Bergwinkl <bergi@axolotlfarm.org> (https://www.bergnet.org/people/bergi/card#me)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bergos/bergos/issues"
+  },
+  "homepage": "https://github.com/bergos/news-crawler-pipeline",
+  "dependencies": {
+    "barnard59": "^1.1.0",
+    "barnard59-base": "^1.1.0",
+    "barnard59-formats": "^1.1.0",
+    "barnard59-graph-store": "^1.0.0",
+    "barnard59-rdf": "^1.0.0",
+    "barnard59-sparql": "^1.0.0",
+    "duplex-to": "^1.0.1",
+    "feedparser": "^2.2.10",
+    "lodash": "^4.17.21",
+    "news-crawler": "https://github.com/bergos/news-crawler.git#master",
+    "node-fetch": "^2.6.1",
+    "rdf-ext": "https://github.com/rdf-ext/rdf-ext.git#next",
+    "readable-stream": "^3.6.0",
+    "store-api": "https://github.com/zazuko/store-api.git#main"
+  },
+  "devDependencies": {
+    "stricter-standard": "^0.2.0"
+  }
+}

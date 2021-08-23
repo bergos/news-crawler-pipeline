@@ -1,0 +1,115 @@
+@base <https://ns.bergnet.org/news/pipeline/feed/>.
+@prefix p: <https://pipeline.described.at/>.
+@prefix code: <https://code.described.at/>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+
+<defaultVars>
+  p:variable [ a p:Variable;
+    p:name "ENDPOINT_GRAPH_STORE_URL";
+    p:value "http://localhost:3030/news/data"
+  ], [ a p:Variable;
+    p:name "ENDPOINT_USER";
+    p:value ""
+  ], [ a p:Variable;
+    p:name "ENDPOINT_PASSWORD";
+    p:value ""
+  ], [ a p:Variable;
+    p:name "GRAPH";
+    p:value "http://localhost/graph/heise"
+  ], [ a p:Variable;
+    p:name "CHANNEL";
+    p:value "https://www.heise.de/rss/heise-atom.xml"
+  ], [ a p:Variable;
+    p:name "LOCAL_CHANNEL";
+    p:value "http://localhost/channel/heise/"
+  ].
+
+<stdout> a p:Pipeline, p:Readable;
+  p:variables <defaultVars>;
+  p:steps [
+    p:stepList (
+      <processFeed>
+      <serialize>
+    )
+  ].
+
+<store> a p:Pipeline;
+  p:variables <defaultVars>;
+  p:steps [
+    p:stepList (
+      <processFeed>
+      <setGraph>
+      <upload>
+    )
+  ].
+
+<processFeed> a p:Pipeline, p:ReadableObjectMode;
+  p:steps [
+    p:stepList (
+      <readFeed>
+      <toLocal1>
+      <toLocal2>
+    )
+  ].
+
+<readFeed> a p:Step;
+  code:implementedBy [ a code:EcmaScriptModule;
+    code:link <file:../lib/feedReader.js#default>
+  ];
+  code:arguments [
+    code:name "channel";
+    code:value "CHANNEL"^^p:VariableName
+  ], [
+    code:name "idExtract";
+    code:value "ID_EXTRACT"^^p:VariableName
+  ].
+
+<toLocal1> a p:Step;
+  code:implementedBy [ a code:EcmaScriptModule;
+    code:link <file:../lib/mapNamespace.js#default>
+  ];
+  code:arguments [
+    code:name "from";
+    code:value "CHANNEL"^^p:VariableName
+  ], [
+    code:name "to";
+    code:value "LOCAL_CHANNEL"^^p:VariableName
+  ].
+
+<toLocal2> a p:Step;
+  code:implementedBy [ a code:EcmaScriptModule;
+    code:link <file:../lib/mapNamespace.js#default>
+  ];
+  code:arguments [
+    code:name "from";
+    code:value "${new URL('.', CHANNEL)}"^^code:EcmaScriptTemplateLiteral
+  ], [
+    code:name "to";
+    code:value "LOCAL_CHANNEL"^^p:VariableName
+  ].
+
+<serialize> a p:Step;
+  code:implementedBy [ a code:EcmaScriptModule;
+    code:link <node:barnard59-formats/ntriples.js#serialize>
+  ].
+
+<setGraph> a p:Step;
+  code:implementedBy [ a code:EcmaScriptModule;
+    code:link <node:barnard59-rdf/setGraph.js#default>
+  ];
+  code:arguments ("GRAPH"^^p:VariableName).
+
+<upload> a p:Step;
+  code:implementedBy [ a code:EcmaScriptModule;
+    code:link <node:barnard59-graph-store/post.js#default>
+  ];
+  code:arguments [
+    code:name "endpoint";
+    code:value "ENDPOINT_GRAPH_STORE_URL"^^p:VariableName
+  ], [
+    code:name "user";
+    code:value "ENDPOINT_USER"^^p:VariableName
+  ], [
+    code:name "password";
+    code:value "ENDPOINT_PASSWORD"^^p:VariableName
+  ].

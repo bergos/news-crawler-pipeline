@@ -1,0 +1,7 @@
+{
+  "channel": "https://www.heise.de/rss/heise-atom.xml",
+  "localChannel": "http://localhost/channel/heise/",
+  "whitelist": "^http(s)?:\\/\\/heise.de\\/",
+  "idExtract": "([a-z,A-Z,0-9,-]*).html",
+  "graph": "http://localhost/graph/heise"
+}

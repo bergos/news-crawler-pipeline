@@ -1,0 +1,6 @@
+{
+  "channel": "https://www.spiegel.de/schlagzeilen/index.rss",
+  "localChannel": "http://localhost/channel/spiegel/schlagzeilen/",
+  "idExtract": "([a-z,A-Z,0-9,\\-]*)#",
+  "graph": "http://localhost/graph/spiegel"
+}
